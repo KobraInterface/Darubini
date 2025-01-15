@@ -9,7 +9,6 @@ library(leaflet.extras)
 library(plotly)
 
 ui <- fluidPage(
-  # Add custom CSS
   tags$head(
     tags$style(HTML("
       /* Overall app styling */
@@ -75,7 +74,6 @@ ui <- fluidPage(
     "))
   ),
   
-  # Wrap title in styled div
   div(class = "title-panel",
       titlePanel("County Economic Report")
   ),
@@ -88,7 +86,6 @@ ui <- fluidPage(
       ),
       uiOutput("regionSelect"),
       
-      # County selector for single county analysis
       conditionalPanel(
         condition = "input.tabset === 'County Analysis'",
         uiOutput("countySelect"),
@@ -102,7 +99,6 @@ ui <- fluidPage(
                     selected = "GDP Contribution (%)")
       ),
       
-      # Map controls only show on Map tab
       conditionalPanel(
         condition = "input.tabset === 'Map'",
         selectInput("mapIndicator", "Select Indicator for Map:",
@@ -114,12 +110,10 @@ ui <- fluidPage(
                     selected = "gdpcont")
       ),
       
-      # Region stats always visible
       tags$div(class = "stats-box",
                uiOutput("regionStats")
       ),
       
-      # Graph controls only show on Graphs tab
       conditionalPanel(
         condition = "input.tabset === 'Graphs'",
         checkboxGroupInput("graphIndicators", 
@@ -239,14 +233,11 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
-  # Read and store the complete data with geometry
+  
   kenya_sf_data <- reactive({
     req(input$year)
-    
-    # Read the original data with geometry
     df <- readRDS("data/Kenya_Data.rds")
     
-    # Create year-specific column names
     selected_cols <- c(
       "Region", "COUNTY",
       "land.kmsqr",
@@ -257,11 +248,9 @@ server <- function(input, output, session) {
       paste0("gdpcont.", input$year)
     )
     
-    # Select columns while keeping geometry
     df <- df %>%
       select(all_of(selected_cols), geometry)
     
-    # Rename columns
     names(df) <- c(
       "Region", "County",
       "Land Area (km²)",
@@ -276,12 +265,10 @@ server <- function(input, output, session) {
     return(df)
   })
   
-  # Table data (without geometry)
   kenya_data <- reactive({
     st_drop_geometry(kenya_sf_data())
   })
   
-  # Region selection UI
   output$regionSelect <- renderUI({
     req(kenya_data())
     regions <- sort(unique(kenya_data()$Region))
@@ -290,7 +277,6 @@ server <- function(input, output, session) {
                 selected = "All")
   })
   
-  # Filtered data for table
   filtered_data <- reactive({
     req(kenya_data(), input$region)
     
@@ -301,7 +287,6 @@ server <- function(input, output, session) {
     }
   })
   
-  # Add region statistics
   output$regionStats <- renderUI({
     req(kenya_data(), input$region)
     
@@ -311,13 +296,11 @@ server <- function(input, output, session) {
       stats_data <- kenya_data() %>% filter(Region == input$region)
     }
     
-    # Calculate regional statistics
     total_pop <- sum(stats_data$Population)
     total_gcp <- sum(stats_data$`Gross County Product (Millions)`)
     avg_gcp_pc <- mean(stats_data$`GCP per Capita`)
     total_gdp_cont <- sum(stats_data$`GDP Contribution (%)`)
     
-    # Create HTML for statistics box
     div(
       style = "background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 15px;",
       h4(style = "margin-top: 0;", 
@@ -332,14 +315,13 @@ server <- function(input, output, session) {
     )
   })
   
-  # Modify the map output
   output$countyMap <- renderLeaflet({
     req(kenya_sf_data(), input$mapIndicator)
     
-    # Get the data for the selected indicator
+  
     map_data <- kenya_sf_data()
     
-    # Determine which column to use based on selected indicator
+    
     value_col <- switch(input$mapIndicator,
                         "gdpcont" = "GDP Contribution (%)",
                         "gcp" = "Gross County Product (Millions)",
@@ -347,13 +329,12 @@ server <- function(input, output, session) {
                         "pop.density" = "Population Density",
                         "gcp.pc" = "GCP per Capita")
     
-    # Create color palette
+ 
     pal <- colorNumeric(
       palette = "YlOrRd",
       domain = map_data[[value_col]]
     )
     
-    # Create the map
     leaflet(map_data) %>%
       addTiles() %>%  # Basic OpenStreetMap tiles
       addPolygons(
@@ -384,7 +365,6 @@ server <- function(input, output, session) {
       )
   })
   
-  # Create legend title
   output$legendTitle <- renderUI({
     req(input$mapIndicator)
     title <- switch(input$mapIndicator,
