@@ -244,7 +244,7 @@ server <- function(input, output, session) {
     req(input$year)
     
     # Read the original data with geometry
-    df <- readRDS("C:/Users/HomePC/Desktop/Repository/Darubini_Final/Darubini_Redone/Kenya_Data.rds")
+    df <- readRDS("data/Kenya_Data.rds")
     
     # Create year-specific column names
     selected_cols <- c(
@@ -523,7 +523,7 @@ server <- function(input, output, session) {
     req(input$county)
     
     # Read the complete historical data
-    df <- readRDS("C:/Users/HomePC/Desktop/Repository/Darubini_Final/Darubini_Redone/Kenya_Data.rds")
+    df <- readRDS("data/Kenya_Data.rds")
     
     # Filter for selected county
     county_data <- df[df$COUNTY == input$county, ]
